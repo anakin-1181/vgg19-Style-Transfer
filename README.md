@@ -1,40 +1,116 @@
-## VGG19 Style Transfer Demo
 
-This project turns the final implementation from `notebooks/experiments.ipynb` into a small app for optimization-based neural style transfer with a frozen VGG19. The backend keeps the notebook's feature extraction, loss modules, and `run_style_transfer_inter` flow, and the Gradio UI streams intermediate images during optimization.
+---
+title: VGG19 Style Transfer
+emoji: 🎨
+colorFrom: blue
+colorTo: indigo
+sdk: gradio
+sdk_version: "6.9.0"
+app_file: app.py
+python_version: "3.12"
+pinned: false
+---
 
-## Included samples
+# VGG19 Style Transfer
 
-Content samples:
-- `data/content/face.jpg`
+An interactive neural style transfer demo built on a frozen VGG19 feature extractor. The project refactors the final implementation from `notebooks/experiments.ipynb` into a small Gradio application that supports sample images, custom uploads, progressive intermediate outputs, and start/stop control for long-running optimization.
 
-Style samples:
-- `data/style/spiral.jpg`
-- `data/style/tiles.jpg`
+## Example
 
-The original source images remain in `notebooks/data/`.
+<p align="center">
+  <img src="data/content/sample_mn.webp" alt="mona_lisa.jpg" width="180">
+  <strong style="font-size: 28px; padding: 0 12px;">+</strong>
+  <img src="data/style/spiral.jpg" alt="spiral.jpg" width="180">
+  <strong style="font-size: 28px; padding: 0 12px;">=</strong>
+  <img src="data/output/sample.webp" alt="sample.webp" width="180">
+</p>
 
-## Setup
+
+
+
+## Features
+
+- VGG19-based optimization style transfer
+- Progressive intermediate snapshots during generation
+- Sample content and style image selection from `data/`
+- Custom content and style uploads
+- Runtime tracking and stop control in the UI
+- Hugging Face Spaces-ready entrypoint
+
+## Method
+
+The backend follows the notebook implementation closely:
+
+- VGG19 is used as a frozen feature extractor
+- style loss is computed from Gram matrices of selected feature maps
+- content loss is computed from selected content features
+- LBFGS performs the image optimization
+- intermediate states are streamed to the frontend during optimization
+
+## Sample Assets
+
+Content samples are loaded from `data/content/`:
+
+- `cat.jpg`
+- `face.jpg`
+- `mona_lisa.jpg`
+
+Style samples are loaded from `data/style/`:
+
+- `abstract.jpg`
+- `spiral.jpg`
+- `starry_night.jpg`
+- `tiles.jpg`
+
+Any additional supported image files added to those folders will appear automatically in the app.
+
+
+## Local Development
+
+Install dependencies:
 
 ```bash
 uv sync
 ```
 
-## Run locally
+Run the app locally:
 
 ```bash
 uv run python -m src.main
 ```
 
-Open the local Gradio URL shown in the terminal. You can use the bundled samples or upload your own content/style images. Uploaded images are center-cropped and resized to `256x256` for a responsive demo.
+You can also run the Hugging Face Spaces entrypoint directly:
 
-## Project layout
+```bash
+uv run python app.py
+```
 
-- `src/image_utils.py`: image loading, center-crop/resize, tensor/PIL conversion, Gram matrix helper
-- `src/losses.py`: style/content loss modules
-- `src/model.py`: frozen VGG19 runtime plus style/content feature extractors
-- `src/transfer.py`: optimization loop and streaming `run_style_transfer_inter`
-- `src/main.py`: Gradio demo app
+## Hugging Face Spaces
 
-## Deployment
+This repository is configured for a Gradio Space:
 
-Gradio is the simplest deployment path. The easiest option is a Hugging Face Space using `uv sync` and `uv run python -m src.main`, or any Python host that can run a long-lived web process.
+- `README.md` includes the required Spaces YAML metadata
+- `app.py` is the Spaces entrypoint
+- `requirements.txt` contains minimal runtime dependencies
+
+To deploy:
+
+1. Create a new Hugging Face Space using the `Gradio` SDK.
+2. Push this repository to the Space.
+3. Hugging Face will install dependencies from `requirements.txt` and launch `app.py`.
+
+## Repository Layout
+
+- `app.py`: Hugging Face Spaces entrypoint
+- `requirements.txt`: minimal deployment dependencies
+- `src/image_utils.py`: image preprocessing and tensor/PIL conversion
+- `src/losses.py`: style and content loss modules
+- `src/model.py`: VGG19 runtime and feature extraction
+- `src/transfer.py`: optimization loop and streamed updates
+- `src/main.py`: Gradio UI and app state management
+- `notebooks/experiments.ipynb`: original notebook implementation
+
+## Notes
+
+- Images are center-cropped and resized to `256x256` for a consistent interactive demo.
+- CPU-only hosting works, but optimization-based style transfer is significantly faster on GPU-backed infrastructure.
