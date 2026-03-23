@@ -26,6 +26,14 @@ An interactive neural style transfer demo built on a frozen VGG19 feature extrac
   <img src="data/output/sample.webp" alt="sample_mn.webp" width="180">
 </p>
 
+<p align="center">
+  <img src="data/output/sample_mn.webp" alt="mona_lisa.jpg" width="180">
+  <strong style="font-size: 28px; padding: 0 12px;">+</strong>
+  <img src="data/style/starry_night.jpg" alt="spiral.jpg" width="180">
+  <strong style="font-size: 28px; padding: 0 12px;">=</strong>
+  <img src="data/output/sample_sn.webp" alt="sample_mn.webp" width="180">
+</p>
+
 ## Features
 
 - VGG19-based optimization style transfer

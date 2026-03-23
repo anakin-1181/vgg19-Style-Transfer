@@ -79,12 +79,12 @@ APP_CSS = """
 """
 
 
-def _generate_button_update(visible: bool) -> dict:
-    return gr.update(value="Generate", variant="primary", visible=visible)
-
-
-def _stop_button_update(visible: bool) -> dict:
-    return gr.update(value="Stop", variant="stop", visible=visible)
+def _action_button_update(is_running: bool) -> dict:
+    return gr.update(
+        value="Stop" if is_running else "Generate",
+        variant="stop" if is_running else "primary",
+        visible=True,
+    )
 
 
 def _resolve_image(
@@ -138,30 +138,31 @@ def _get_generation_started_at(generation_id: int) -> float:
         return GENERATION_STARTED_AT
 
 
-def _start_generation_request() -> tuple[dict, dict, str, int, None, list, dict]:
+def _handle_action_button(
+    is_running: bool,
+) -> tuple[bool, int, str | dict, None, list, dict, dict]:
+    if is_running:
+        stopped = _stop_generation()
+        runtime_update: str | dict = "Idle" if stopped else gr.skip()
+        return (
+            False,
+            0,
+            runtime_update,
+            None,
+            [],
+            gr.update(active=False),
+            _action_button_update(False),
+        )
+
     generation_id = _start_generation()
     return (
-        _generate_button_update(False),
-        _stop_button_update(True),
-        "0.0s",
+        True,
         generation_id,
+        "0.0s",
         None,
         [],
         gr.update(active=True),
-    )
-
-
-def _stop_generation_request() -> tuple[dict, dict, str | dict, int, None, list, dict]:
-    stopped = _stop_generation()
-    runtime_update: str | dict = "Idle" if stopped else gr.skip()
-    return (
-        _generate_button_update(True),
-        _stop_button_update(False),
-        runtime_update,
-        0,
-        None,
-        [],
-        gr.update(active=False),
+        _action_button_update(True),
     )
 
 
@@ -250,6 +251,7 @@ def _activate_style_upload(
 
 
 def generate_style_transfer(
+    is_running: bool,
     generation_id: int,
     content_source: str,
     content_sample: str,
@@ -262,7 +264,7 @@ def generate_style_transfer(
     content_weight: float,
     show_every: int,
 ):
-    if generation_id == 0 or not _is_generation_active(generation_id):
+    if not is_running or generation_id == 0 or not _is_generation_active(generation_id):
         return
 
     started_at = _get_generation_started_at(generation_id)
@@ -315,8 +317,8 @@ def generate_style_transfer(
         yield (
             update.image,
             snapshots,
-            _generate_button_update(False),
-            _stop_button_update(True),
+            _action_button_update(True),
+            True,
             gr.update(active=True),
         )
 
@@ -325,8 +327,8 @@ def generate_style_transfer(
         yield (
             gr.skip(),
             gr.skip(),
-            _generate_button_update(True),
-            _stop_button_update(False),
+            _action_button_update(False),
+            False,
             gr.update(active=False),
         )
 
@@ -407,8 +409,8 @@ def build_demo() -> gr.Blocks:
             style_weight = gr.Slider(50, 200, value=100, step=10, label="Style Weight")
             content_weight = gr.Slider(0.1, 0.3, value=0.1, step=0.05, label="Content Weight")
 
-        generate_button = gr.Button("Generate", variant="primary", visible=True)
-        stop_button = gr.Button("Stop", variant="stop", visible=False)
+        action_button = gr.Button("Generate", variant="primary", visible=True)
+        is_running_state = gr.State(False)
         generation_id_state = gr.State(0)
         runtime_timer = gr.Timer(value=0.2, active=False)
 
@@ -460,21 +462,23 @@ def build_demo() -> gr.Blocks:
             queue=False,
         )
 
-        generate_button.click(
-            _start_generation_request,
+        action_button.click(
+            _handle_action_button,
+            inputs=[is_running_state],
             outputs=[
-                generate_button,
-                stop_button,
-                runtime_box,
+                is_running_state,
                 generation_id_state,
+                runtime_box,
                 result_image,
                 history_gallery,
                 runtime_timer,
+                action_button,
             ],
             queue=False,
         ).then(
             generate_style_transfer,
             inputs=[
+                is_running_state,
                 generation_id_state,
                 content_source,
                 content_sample,
@@ -487,22 +491,9 @@ def build_demo() -> gr.Blocks:
                 content_weight,
                 show_every,
             ],
-            outputs=[result_image, history_gallery, generate_button, stop_button, runtime_timer],
+            outputs=[result_image, history_gallery, action_button, is_running_state, runtime_timer],
             concurrency_limit=1,
             trigger_mode="once",
-        )
-        stop_button.click(
-            _stop_generation_request,
-            outputs=[
-                generate_button,
-                stop_button,
-                runtime_box,
-                generation_id_state,
-                result_image,
-                history_gallery,
-                runtime_timer,
-            ],
-            queue=False,
         )
         runtime_timer.tick(
             _tick_runtime,
