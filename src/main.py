@@ -22,6 +22,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CONTENT_DIR = PROJECT_ROOT / "data" / "content"
 STYLE_DIR = PROJECT_ROOT / "data" / "style"
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
+EXCLUDED_SAMPLE_STEMS = {"sample_mn"}
 
 
 def _sample_label(path: Path) -> str:
@@ -30,7 +31,11 @@ def _sample_label(path: Path) -> str:
 
 def _sample_map(directory: Path) -> dict[str, Path]:
     files = sorted(
-        path for path in directory.iterdir() if path.is_file() and path.suffix.lower() in IMAGE_EXTENSIONS
+        path
+        for path in directory.iterdir()
+        if path.is_file()
+        and path.suffix.lower() in IMAGE_EXTENSIONS
+        and path.stem not in EXCLUDED_SAMPLE_STEMS
     )
     return {_sample_label(path): path for path in files}
 
@@ -387,8 +392,8 @@ def build_demo() -> gr.Blocks:
                     )
 
         with gr.Row():
-            num_steps = gr.Slider(200, 1500, value=1000, step=100, label="Optimization Steps")
-            show_every = gr.Slider(50, 200, value=100, step=50, label="Snapshot Every N Steps")
+            num_steps = gr.Slider(100, 1500, value=100, step=100, label="Optimization Steps")
+            show_every = gr.Slider(10, 100, value=10, step=10, label="Snapshot Every N Steps")
 
         with gr.Row():
             style_weight = gr.Slider(50, 200, value=100, step=10, label="Style Weight")

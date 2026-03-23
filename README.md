@@ -1,5 +1,4 @@
-
----
+git add -f data/output/sample.webp---
 title: VGG19 Style Transfer
 emoji: 🎨
 colorFrom: blue
@@ -18,15 +17,12 @@ An interactive neural style transfer demo built on a frozen VGG19 feature extrac
 ## Example
 
 <p align="center">
-  <img src="data/content/sample_mn.webp" alt="mona_lisa.jpg" width="180">
+  <img src="data/output/sample_mn.webp" alt="mona_lisa.jpg" width="180">
   <strong style="font-size: 28px; padding: 0 12px;">+</strong>
   <img src="data/style/spiral.jpg" alt="spiral.jpg" width="180">
   <strong style="font-size: 28px; padding: 0 12px;">=</strong>
   <img src="data/output/sample.webp" alt="sample.webp" width="180">
 </p>
-
-
-
 
 ## Features
 
@@ -63,7 +59,6 @@ Style samples are loaded from `data/style/`:
 - `tiles.jpg`
 
 Any additional supported image files added to those folders will appear automatically in the app.
-
 
 ## Local Development
 
