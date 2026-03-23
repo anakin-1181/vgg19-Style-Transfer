@@ -22,7 +22,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CONTENT_DIR = PROJECT_ROOT / "data" / "content"
 STYLE_DIR = PROJECT_ROOT / "data" / "style"
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
-EXCLUDED_SAMPLE_STEMS = {"sample_mn"}
+EXCLUDED_SAMPLE_STEMS = {"face", "sample_mn"}
 
 
 def _sample_label(path: Path) -> str:
@@ -41,8 +41,8 @@ def _sample_map(directory: Path) -> dict[str, Path]:
 
 CONTENT_SAMPLES = _sample_map(CONTENT_DIR)
 STYLE_SAMPLES = _sample_map(STYLE_DIR)
-DEFAULT_CONTENT_SAMPLE = "Face" if "Face" in CONTENT_SAMPLES else next(iter(CONTENT_SAMPLES))
-DEFAULT_STYLE_SAMPLE = "Spiral" if "Spiral" in STYLE_SAMPLES else next(iter(STYLE_SAMPLES))
+DEFAULT_CONTENT_SAMPLE = "Mona Lisa" if "Mona Lisa" in CONTENT_SAMPLES else next(iter(CONTENT_SAMPLES))
+DEFAULT_STYLE_SAMPLE = "Abstract" if "Abstract" in STYLE_SAMPLES else next(iter(STYLE_SAMPLES))
 GENERATION_COUNTER = count(1)
 GENERATION_LOCK = Lock()
 ACTIVE_GENERATION_ID = 0
@@ -77,6 +77,14 @@ APP_CSS = """
     object-fit: contain;
 }
 """
+
+
+def _generate_button_update(visible: bool) -> dict:
+    return gr.update(value="Generate", variant="primary", visible=visible)
+
+
+def _stop_button_update(visible: bool) -> dict:
+    return gr.update(value="Stop", variant="stop", visible=visible)
 
 
 def _resolve_image(
@@ -133,8 +141,8 @@ def _get_generation_started_at(generation_id: int) -> float:
 def _start_generation_request() -> tuple[dict, dict, str, int, None, list, dict]:
     generation_id = _start_generation()
     return (
-        gr.update(visible=False),
-        gr.update(visible=True),
+        _generate_button_update(False),
+        _stop_button_update(True),
         "0.0s",
         generation_id,
         None,
@@ -147,8 +155,8 @@ def _stop_generation_request() -> tuple[dict, dict, str | dict, int, None, list,
     stopped = _stop_generation()
     runtime_update: str | dict = "Idle" if stopped else gr.skip()
     return (
-        gr.update(visible=True),
-        gr.update(visible=False),
+        _generate_button_update(True),
+        _stop_button_update(False),
         runtime_update,
         0,
         None,
@@ -307,8 +315,8 @@ def generate_style_transfer(
         yield (
             update.image,
             snapshots,
-            gr.update(visible=False),
-            gr.update(visible=True),
+            _generate_button_update(False),
+            _stop_button_update(True),
             gr.update(active=True),
         )
 
@@ -317,8 +325,8 @@ def generate_style_transfer(
         yield (
             gr.skip(),
             gr.skip(),
-            gr.update(visible=True),
-            gr.update(visible=False),
+            _generate_button_update(True),
+            _stop_button_update(False),
             gr.update(active=False),
         )
 
@@ -392,8 +400,8 @@ def build_demo() -> gr.Blocks:
                     )
 
         with gr.Row():
-            num_steps = gr.Slider(100, 1500, value=100, step=100, label="Optimization Steps")
-            show_every = gr.Slider(10, 100, value=10, step=10, label="Snapshot Every N Steps")
+            num_steps = gr.Slider(100, 1500, value=300, step=100, label="Optimization Steps")
+            show_every = gr.Slider(10, 100, value=30, step=10, label="Snapshot Every N Steps")
 
         with gr.Row():
             style_weight = gr.Slider(50, 200, value=100, step=10, label="Style Weight")
