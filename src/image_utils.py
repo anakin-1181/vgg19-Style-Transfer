@@ -15,6 +15,7 @@ UNLOADER = transforms.ToPILImage()
 def get_image_transform(image_size: int = IMAGE_SIZE) -> transforms.Compose:
     """Center-crop and resize images for a consistent demo input size."""
 
+
     return transforms.Compose(
         [
             transforms.Lambda(
