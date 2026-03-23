@@ -10,7 +10,5 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 
-data/output/*
-!data/output/.gitkeep
 
 output.png
